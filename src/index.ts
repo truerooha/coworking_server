@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { config } from 'dotenv';
 import roomsRouter from './routes/rooms';
+import authRouter from './routes/auth';
 
 // Load environment variables
 config();
@@ -23,6 +24,7 @@ app.get('/api/health', (req, res) => {
 
 // API Routes
 app.use('/api/rooms', roomsRouter);
+app.use('/api/auth', authRouter);
 // app.use('/api/bookings', bookingsRouter);
 // app.use('/api/me', meRouter);
 
