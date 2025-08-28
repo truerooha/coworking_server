@@ -1,15 +1,10 @@
 import express from 'express';
 import cors from 'cors';
-import { config } from 'dotenv';
 import roomsRouter from './routes/rooms';
 import authRouter from './routes/auth';
-
-// Load environment variables
-config();
+import { PORT, CORS_ORIGIN } from './config/env';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
 
 // Middleware
 app.use(cors({ 

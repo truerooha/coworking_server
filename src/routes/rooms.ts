@@ -1,12 +1,10 @@
 import express from 'express';
 import { MongoClient, Db, Collection } from 'mongodb';
+import { MONGODB_URI, DB_NAME, COLLECTION_NAME } from '../config/env';
 
 const router = express.Router();
 
 // MongoDB connection
-const MONGODB_URI = 'mongodb://localhost:27017';
-const DB_NAME = 'coworking';
-const COLLECTION_NAME = 'rooms';
 
 let db: Db;
 let roomsCollection: Collection;
