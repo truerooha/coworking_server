@@ -3,6 +3,7 @@ import cors from 'cors';
 import roomsRouter from './routes/rooms';
 import authRouter from './routes/auth';
 import { PORT, CORS_ORIGIN } from './config/env';
+import { connectToDatabase } from './config/database';
 
 const app = express();
 
@@ -41,9 +42,23 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`CORS origin: ${CORS_ORIGIN}`);
-});
+// Запускаем сервер только после подключения к базе данных
+async function startServer() {
+  try {
+    // Подключаемся к базе данных
+    await connectToDatabase();
+    
+    // Запускаем сервер
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🌐 CORS origin: ${CORS_ORIGIN}`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 export default app;
