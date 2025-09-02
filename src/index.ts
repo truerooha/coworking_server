@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import roomsRouter from './routes/rooms';
 import authRouter from './routes/auth';
+import bookingsRouter from './routes/bookings';
 import { PORT, CORS_ORIGIN } from './config/env';
 import { connectToDatabase } from './config/database';
 
@@ -21,7 +22,7 @@ app.get('/api/health', (req, res) => {
 // API Routes
 app.use('/api/rooms', roomsRouter);
 app.use('/api/auth', authRouter);
-// app.use('/api/bookings', bookingsRouter);
+app.use('/api/bookings', bookingsRouter);
 // app.use('/api/me', meRouter);
 
 // // Error handling middleware
