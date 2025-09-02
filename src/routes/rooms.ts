@@ -84,11 +84,62 @@ type Room = {
 // Initialize MongoDB connection
 connectToMongoDB();
 
-// GET /api/rooms - Get all rooms
+// GET /api/rooms - Get all rooms with live booking status
 router.get('/', async (req, res) => {
   try {
     const rooms = await roomsCollection.find({}).toArray();
-    return res.json(rooms);
+
+    // Дополняем статусами из коллекции бронирований
+    const bookingsCollection = db.collection('bookings');
+
+    // Локальная дата YYYY-MM-DD и время HH:MM
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const today = `${yyyy}-${mm}-${dd}`;
+    const nowTime = `${now.getHours().toString().padStart(2, '0')}:${now
+      .getMinutes()
+      .toString()
+      .padStart(2, '0')}`;
+
+    // Заберём все брони на сегодня, чтобы определить занятость
+    const todaysBookings = await bookingsCollection
+      .find({ date: today })
+      .toArray();
+
+    const roomIdToBookings = new Map<string, any[]>();
+    for (const b of todaysBookings) {
+      if (!roomIdToBookings.has(b.roomId)) roomIdToBookings.set(b.roomId, []);
+      roomIdToBookings.get(b.roomId)!.push(b);
+    }
+
+    const enriched = rooms.map((room: any) => {
+      const list = roomIdToBookings.get(room.id) || [];
+      const active = list.find(
+        (b) => b.startTime <= nowTime && nowTime < b.endTime
+      );
+
+      if (active) {
+        return {
+          ...room,
+          isOccupied: true,
+          currentBooking: {
+            user: active.userName,
+            startTime: active.startTime,
+            endTime: active.endTime,
+          },
+        };
+      }
+
+      return {
+        ...room,
+        isOccupied: false,
+        currentBooking: undefined,
+      };
+    });
+
+    return res.json(enriched);
   } catch (error) {
     console.error('Error fetching rooms:', error);
     return res.status(500).json({ error: 'Failed to fetch rooms' });
