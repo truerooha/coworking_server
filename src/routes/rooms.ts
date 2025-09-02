@@ -114,11 +114,23 @@ router.get('/', async (req, res) => {
       roomIdToBookings.get(b.roomId)!.push(b);
     }
 
+    const toMinutes = (hhmm: string): number => {
+      const parts = String(hhmm).split(':');
+      const h = parts.length > 0 ? parseInt(parts[0], 10) || 0 : 0;
+      const m = parts.length > 1 ? parseInt(parts[1], 10) || 0 : 0;
+      return h * 60 + m;
+    };
+    const nowMinutes = toMinutes(nowTime);
+
     const enriched = rooms.map((room: any) => {
       const list = roomIdToBookings.get(room.id) || [];
-      const active = list.find(
-        (b) => b.startTime <= nowTime && nowTime < b.endTime
-      );
+      const active = list.find((b: any) => {
+        const startStr: string = String(b?.startTime || '');
+        const endStr: string = String(b?.endTime || '');
+        const startMins = toMinutes(startStr);
+        const endMins = toMinutes(endStr);
+        return startMins <= nowMinutes && nowMinutes < endMins;
+      });
 
       if (active) {
         return {
