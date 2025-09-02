@@ -1,6 +1,6 @@
 import express from 'express';
 import { MongoClient, Db, Collection } from 'mongodb';
-import { MONGODB_URI, DB_NAME, COLLECTION_NAME } from '../config/env';
+import { MONGODB_URI, DB_NAME, COLLECTION_NAME, APP_TIMEZONE } from '../config/env';
 
 const router = express.Router();
 
@@ -92,16 +92,19 @@ router.get('/', async (req, res) => {
     // Дополняем статусами из коллекции бронирований
     const bookingsCollection = db.collection('bookings');
 
-    // Локальная дата YYYY-MM-DD и время HH:MM
+    // Дата/время в заданной таймзоне (APP_TIMEZONE)
+    const tzFormatterDate = new Intl.DateTimeFormat('ru-RU', { timeZone: APP_TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit' });
+    const tzFormatterTime = new Intl.DateTimeFormat('ru-RU', { timeZone: APP_TIMEZONE, hour: '2-digit', minute: '2-digit', hour12: false });
     const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
+    const partsDate = tzFormatterDate.formatToParts(now);
+    const partsTime = tzFormatterTime.formatToParts(now);
+    const dd = partsDate.find(p => p.type === 'day')?.value?.padStart(2, '0') || '01';
+    const mm = partsDate.find(p => p.type === 'month')?.value?.padStart(2, '0') || '01';
+    const yyyy = partsDate.find(p => p.type === 'year')?.value || '1970';
+    const hh = partsTime.find(p => p.type === 'hour')?.value?.padStart(2, '0') || '00';
+    const min = partsTime.find(p => p.type === 'minute')?.value?.padStart(2, '0') || '00';
     const today = `${yyyy}-${mm}-${dd}`;
-    const nowTime = `${now.getHours().toString().padStart(2, '0')}:${now
-      .getMinutes()
-      .toString()
-      .padStart(2, '0')}`;
+    const nowTime = `${hh}:${min}`;
 
     // Заберём все брони на сегодня, чтобы определить занятость
     const todaysBookings = await bookingsCollection
@@ -119,6 +122,7 @@ router.get('/', async (req, res) => {
       serverNowIso: new Date().toISOString(),
       today,
       nowTime,
+      appTimezone: APP_TIMEZONE,
       timezoneOffsetMin: new Date().getTimezoneOffset(),
       totals: {
         rooms: rooms.length,

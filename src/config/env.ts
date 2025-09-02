@@ -15,5 +15,6 @@ export const MONGODB_URI = process.env.MONGO_URL || 'mongodb://localhost:27017';
 export const DB_NAME = process.env.DB_NAME || 'coworking';
 export const COLLECTION_NAME = process.env.COLLECTION_NAME || 'rooms';
 export const USERS_COLLECTION_NAME = 'users';
+export const APP_TIMEZONE = process.env.APP_TIMEZONE || 'Europe/Moscow';
 
 
