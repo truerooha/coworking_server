@@ -34,7 +34,7 @@ async function initializeRoomsCollection() {
     {
       id: '1',
       name: 'Конференц-зал',
-      image: 'https://i.postimg.cc/WtpDfQPt/room.jpg',
+      image: 'https://i.postimg.cc/nVBvMJRK/room.jpg',
       capacity: 10,
       description: 'Большой конференц-зал с видеоконференцсвязью',
       isOccupied: false,
@@ -42,7 +42,7 @@ async function initializeRoomsCollection() {
     {
       id: '2', 
       name: 'Zoom room 1',
-      image: 'https://i.postimg.cc/8JNFGYJK/zoom1.jpg',
+      image: 'https://i.postimg.cc/d1TG2PqY/zoom1.jpg',
       capacity: 1,
       description: 'Уютная комната для видеозвонков',
       isOccupied: true,
