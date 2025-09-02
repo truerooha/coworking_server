@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { ObjectId } from 'mongodb';
 import { getDatabase } from '../config/database';
 import { COLLECTION_NAME } from '../config/env';
 
@@ -118,6 +119,34 @@ router.get('/me/upcoming', async (req, res) => {
     return res.json({ bookings });
   } catch (error) {
     console.error('Error fetching upcoming bookings:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/bookings/:id?userName=...
+router.delete('/:id', async (req, res) => {
+  try {
+    const id = String(req.params.id || '');
+    const userName = String(req.query.userName || '');
+    if (!id) {
+      return res.status(400).json({ error: 'id is required' });
+    }
+    if (!userName) {
+      return res.status(400).json({ error: 'userName is required' });
+    }
+
+    const db = getDatabase();
+    const bookingsCollection = db.collection<Booking>(BOOKINGS_COLLECTION_NAME);
+
+    // Удаляем только бронь владельца
+    const result = await bookingsCollection.deleteOne({ _id: new ObjectId(id), userName });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting booking:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
