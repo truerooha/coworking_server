@@ -114,23 +114,37 @@ router.get('/', async (req, res) => {
       roomIdToBookings.get(b.roomId)!.push(b);
     }
 
-    const toMinutes = (hhmm: string): number => {
-      const parts = String(hhmm).split(':');
-      const h = parts.length > 0 ? parseInt(parts[0], 10) || 0 : 0;
-      const m = parts.length > 1 ? parseInt(parts[1], 10) || 0 : 0;
-      return h * 60 + m;
+    const debugEnabled = String(req.query.debug || '0') === '1';
+    const debugLog: any = {
+      serverNowIso: new Date().toISOString(),
+      today,
+      nowTime,
+      timezoneOffsetMin: new Date().getTimezoneOffset(),
+      totals: {
+        rooms: rooms.length,
+        todaysBookings: todaysBookings.length
+      },
+      rooms: [] as any[]
     };
-    const nowMinutes = toMinutes(nowTime);
 
     const enriched = rooms.map((room: any) => {
       const list = roomIdToBookings.get(room.id) || [];
-      const active = list.find((b: any) => {
-        const startStr: string = String(b?.startTime || '');
-        const endStr: string = String(b?.endTime || '');
-        const startMins = toMinutes(startStr);
-        const endMins = toMinutes(endStr);
-        return startMins <= nowMinutes && nowMinutes < endMins;
-      });
+      const active = list.find(
+        (b) => b.startTime <= nowTime && nowTime < b.endTime
+      );
+
+      if (debugEnabled) {
+        debugLog.rooms.push({
+          roomId: room.id,
+          roomName: room.name,
+          bookingsToday: list
+            .map((b: any) => ({ startTime: b.startTime, endTime: b.endTime, userName: b.userName }))
+            .sort((a: any, b: any) => (a.startTime < b.startTime ? -1 : a.startTime > b.startTime ? 1 : 0)),
+          activeMatch: active
+            ? { startTime: active.startTime, endTime: active.endTime, userName: active.userName }
+            : null
+        });
+      }
 
       if (active) {
         return {
@@ -150,6 +164,11 @@ router.get('/', async (req, res) => {
         currentBooking: undefined,
       };
     });
+
+    if (debugEnabled) {
+      console.log('[GET /api/rooms] debug:', JSON.stringify(debugLog, null, 2));
+      return res.json({ rooms: enriched, debug: debugLog });
+    }
 
     return res.json(enriched);
   } catch (error) {
